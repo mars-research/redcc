@@ -77,6 +77,7 @@ mod remove_zsts;
 mod required_consts;
 mod reveal_all;
 mod separate_const_switch;
+mod show_assign;
 mod shim;
 // This pass is public to allow external drivers to perform MIR cleanup
 pub mod simplify;
@@ -234,6 +235,7 @@ fn mir_const<'tcx>(
             &Lint(function_item_references::FunctionItemReferences),
             // What we need to do constant evaluation.
             &simplify::SimplifyCfg::new("initial"),
+            &show_assign::ShowAssign,
             &rustc_peek::SanityCheck, // Just a lint
             &marker::PhaseChange(MirPhase::Const),
         ],
