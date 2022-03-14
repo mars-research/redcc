@@ -84,6 +84,7 @@ mod match_branches;
 mod multiple_return_terminators;
 mod normalize_array_len;
 mod nrvo;
+mod redcc;
 mod prettify;
 mod ref_prop;
 mod remove_noop_landing_pads;
@@ -94,7 +95,6 @@ mod remove_zsts;
 mod required_consts;
 mod reveal_all;
 mod separate_const_switch;
-mod show_assign;
 mod shim;
 mod ssa;
 // This pass is public to allow external drivers to perform MIR cleanup
@@ -283,7 +283,7 @@ fn mir_const(tcx: TyCtxt<'_>, def: LocalDefId) -> &Steal<Body<'_>> {
             &Lint(function_item_references::FunctionItemReferences),
             // What we need to do constant evaluation.
             &simplify::SimplifyCfg::Initial,
-            &show_assign::ShowAssign,
+            &redcc::ShowAssign,
             &rustc_peek::SanityCheck, // Just a lint
         ],
         None,
