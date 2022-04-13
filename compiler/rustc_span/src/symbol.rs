@@ -256,6 +256,7 @@ symbols! {
         Poll,
         ProcMacro,
         ProceduralMasqueradeDummyType,
+        RRef,
         Range,
         RangeFrom,
         RangeFull,
