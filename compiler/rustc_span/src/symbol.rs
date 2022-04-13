@@ -230,6 +230,7 @@ symbols! {
         ProcMacro,
         ProcMacroHack,
         ProceduralMasqueradeDummyType,
+        RRef,
         Range,
         RangeFrom,
         RangeFull,
