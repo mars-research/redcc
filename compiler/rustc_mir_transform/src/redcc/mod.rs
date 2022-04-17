@@ -1,12 +1,8 @@
+mod embedck;
+
 use crate::MirPass;
-use rustc_middle::mir::{
-    visit::MutVisitor,
-    Body, LocalDecls, Location, Place, Rvalue
-};
-use rustc_middle::ty::{
-    // print::with_no_trimmed_paths,
-    TyCtxt
-};
+use rustc_middle::mir::{visit::MutVisitor, Body, LocalDecls, Location, Place, Rvalue};
+use rustc_middle::ty::{print::with_no_trimmed_paths, TyCtxt};
 use rustc_span::symbol::sym;
 
 pub struct RRefEmbedTransform;
@@ -16,14 +12,14 @@ impl<'tcx> MirPass<'tcx> for RRefEmbedTransform {
         eprintln!("starting RRefEmbedTransform pass");
         eprintln!("RRef DefId: {:?}", tcx.get_diagnostic_item(sym::RRef));
 
-        let mut visitor = RRefEmbedTransformVisitor { tcx, _local_decls: body.local_decls.clone() };
+        let mut visitor = RRefEmbedTransformVisitor { tcx, local_decls: body.local_decls.clone() };
         visitor.visit_body(body);
     }
 }
 
 struct RRefEmbedTransformVisitor<'tcx> {
     tcx: TyCtxt<'tcx>,
-    _local_decls: LocalDecls<'tcx>,
+    local_decls: LocalDecls<'tcx>,
 }
 
 impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
@@ -33,13 +29,18 @@ impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
 
     fn visit_assign(
         &mut self,
-        _place: &mut Place<'tcx>,
-        _rvalue: &mut Rvalue<'tcx>,
-        _location: Location,
+        place: &mut Place<'tcx>,
+        rvalue: &mut Rvalue<'tcx>,
+        location: Location,
     ) {
-        // let rval_ty = rvalue.ty(&self.local_decls, self.tcx);
-        // with_no_trimmed_paths!({
-        //     eprintln!("found an assignment of type {}", rval_ty);
-        // });
+        let rval_ty = rvalue.ty(&self.local_decls, self.tcx);
+        with_no_trimmed_paths!({
+            eprintln!(
+                "found an assignment of type {}: {:?} = {:?} [{:?}]",
+                rval_ty, place, rvalue, location
+            );
+        });
+
+        eprintln!("rvalue contains rref? {}", embedck::contains_rref(self.tcx, rval_ty));
     }
 }
