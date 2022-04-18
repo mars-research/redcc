@@ -1,25 +1,23 @@
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::mir::{LocalDecls, Place};
-use rustc_middle::ty::{self, print::with_no_trimmed_paths, AdtDef, Ty, TyCtxt, TypeAndMut};
+use rustc_middle::ty::{self, AdtDef, Ty, TyCtxt, TypeAndMut};
 use rustc_span::symbol::sym;
 
-pub fn place_contains_rref<'tcx>(place: Place<'tcx>, tcx: TyCtxt<'tcx>, local_decls: &LocalDecls<'tcx>) -> bool {
+pub fn place_contains_rref<'tcx>(
+    place: Place<'tcx>,
+    tcx: TyCtxt<'tcx>,
+    local_decls: &LocalDecls<'tcx>,
+) -> bool {
     let place_ty = local_decls[place.local].ty;
 
     if ty_is_rref(place_ty, tcx) {
-        eprintln!("base is rref");
         return true;
     }
 
     for (base, elem) in place.iter_projections() {
         let proj_ty = base.ty(local_decls, tcx).projection_ty(tcx, elem).ty;
 
-        with_no_trimmed_paths!({
-            eprintln!("proj type: {:?}", proj_ty);
-        });
-
         if ty_is_rref(proj_ty, tcx) {
-            eprintln!("proj is rref");
             return true;
         }
     }
