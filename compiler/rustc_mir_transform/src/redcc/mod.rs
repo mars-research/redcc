@@ -12,6 +12,7 @@ impl<'tcx> MirPass<'tcx> for RRefEmbedTransform {
         eprintln!("starting RRefEmbedTransform pass");
         eprintln!("RRef DefId: {:?}", tcx.get_diagnostic_item(sym::RRef));
 
+        // FIXME: figure this thing out
         let mut visitor = RRefEmbedTransformVisitor { tcx, local_decls: body.local_decls.clone() };
         visitor.visit_body(body);
     }
@@ -33,14 +34,17 @@ impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
         rvalue: &mut Rvalue<'tcx>,
         location: Location,
     ) {
-        let rval_ty = rvalue.ty(&self.local_decls, self.tcx);
+        let place_ty = self.local_decls[place.local].ty;
+        let rvalue_ty = rvalue.ty(&self.local_decls, self.tcx);
         with_no_trimmed_paths!({
             eprintln!(
-                "found an assignment of type {}: {:?} = {:?} [{:?}]",
-                rval_ty, place, rvalue, location
+                "found an assignment of type {} to {}: {:?} = {:?} [{:?}]",
+                place_ty, rvalue_ty, place, rvalue, location
             );
         });
 
-        eprintln!("rvalue contains rref? {}", embedck::contains_rref(self.tcx, rval_ty));
+        if embedck::place_contains_rref(*place, self.tcx, &self.local_decls) && embedck::contains_rref(self.tcx, rvalue_ty) {
+            eprintln!("assignment embeds");
+        }
     }
 }
