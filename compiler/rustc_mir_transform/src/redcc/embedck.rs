@@ -1,6 +1,38 @@
 use rustc_data_structures::fx::FxHashSet;
-use rustc_middle::ty::{self, AdtDef, Ty, TyCtxt, TypeAndMut};
+use rustc_middle::mir::{LocalDecls, Place};
+use rustc_middle::ty::{self, print::with_no_trimmed_paths, AdtDef, Ty, TyCtxt, TypeAndMut};
 use rustc_span::symbol::sym;
+
+pub fn place_contains_rref<'tcx>(place: Place<'tcx>, tcx: TyCtxt<'tcx>, local_decls: &LocalDecls<'tcx>) -> bool {
+    let place_ty = local_decls[place.local].ty;
+
+    if ty_is_rref(place_ty, tcx) {
+        eprintln!("base is rref");
+        return true;
+    }
+
+    for (base, elem) in place.iter_projections() {
+        let proj_ty = base.ty(local_decls, tcx).projection_ty(tcx, elem).ty;
+
+        with_no_trimmed_paths!({
+            eprintln!("proj type: {:?}", proj_ty);
+        });
+
+        if ty_is_rref(proj_ty, tcx) {
+            eprintln!("proj is rref");
+            return true;
+        }
+    }
+
+    false
+}
+
+fn ty_is_rref<'tcx>(ty: Ty<'tcx>, tcx: TyCtxt<'tcx>) -> bool {
+    match ty.ty_adt_def() {
+        Some(adt) => tcx.is_diagnostic_item(sym::RRef, adt.did()),
+        _ => false,
+    }
+}
 
 pub fn contains_rref<'tcx>(tcx: TyCtxt<'tcx>, t: Ty<'tcx>) -> bool {
     contains_rref_impl(tcx, t, &mut FxHashSet::default())
