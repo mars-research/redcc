@@ -33,7 +33,7 @@ impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
         let place_ty = self.local_decls[place.local].ty;
         let rvalue_ty = rvalue.ty(&self.local_decls, self.tcx);
 
-        if embedck::place_contains_rref(*place, self.tcx, &self.local_decls)
+        if embedck::place_contains_embedded_rref(*place, self.tcx, &self.local_decls)
             && embedck::ty_contains_rref(self.tcx, rvalue_ty)
         {
             with_no_trimmed_paths!({

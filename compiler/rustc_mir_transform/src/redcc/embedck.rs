@@ -3,26 +3,25 @@ use rustc_middle::mir::{LocalDecls, Place, PlaceElem, PlaceRef};
 use rustc_middle::ty::{self, AdtDef, Ty, TyCtxt, TypeAndMut};
 use rustc_span::symbol::sym;
 
-pub fn place_contains_rref<'tcx>(
+pub fn place_contains_embedded_rref<'tcx>(
     place: Place<'tcx>,
     tcx: TyCtxt<'tcx>,
     local_decls: &LocalDecls<'tcx>,
 ) -> bool {
     let place_ty = place_base_ty(place, local_decls);
 
-    if ty_is_rref(place_ty, tcx) {
-        return true;
-    }
+    // an embedding must have projections
+    // if it has no projections, then the type of source and dest must match exactly
+    // and there can be _no_ embedding
 
-    for (base, elem) in place.iter_projections() {
-        let proj_ty = place_projection_ty(base, elem, tcx, local_decls);
+    let place_base_is_embedding_rref = ty_is_rref(place_ty, tcx) && !place.projection.is_empty();
 
-        if ty_is_rref(proj_ty, tcx) {
-            return true;
-        }
-    }
+    place_base_is_embedding_rref
+        || place.iter_projections().any(|(base, elem)| {
+            let proj_ty = place_projection_ty(base, elem, tcx, local_decls);
 
-    false
+            ty_is_rref(proj_ty, tcx)
+        })
 }
 
 fn place_base_ty<'tcx>(place: Place<'tcx>, local_decls: &LocalDecls<'tcx>) -> Ty<'tcx> {
