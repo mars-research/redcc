@@ -17,7 +17,7 @@ pub fn place_contains_embedded_rref<'tcx>(
     let place_base_is_embedding_rref = ty_is_rref(place_ty, tcx) && !place.projection.is_empty();
 
     place_base_is_embedding_rref
-        || place.iter_projections().any(|(base, elem)| {
+        || place.iter_projections().rev().skip(1).any(|(base, elem)| {
             let proj_ty = place_projection_ty(base, elem, tcx, local_decls);
 
             ty_is_rref(proj_ty, tcx)

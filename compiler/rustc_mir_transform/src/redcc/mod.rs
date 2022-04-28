@@ -24,12 +24,7 @@ impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
         self.tcx
     }
 
-    fn visit_assign(
-        &mut self,
-        place: &mut Place<'tcx>,
-        rvalue: &mut Rvalue<'tcx>,
-        location: Location,
-    ) {
+    fn visit_assign(&mut self, place: &mut Place<'tcx>, rvalue: &mut Rvalue<'tcx>, _: Location) {
         let place_ty = self.local_decls[place.local].ty;
         let rvalue_ty = rvalue.ty(&self.local_decls, self.tcx);
 
@@ -37,10 +32,7 @@ impl<'tcx> MutVisitor<'tcx> for RRefEmbedTransformVisitor<'tcx> {
             && embedck::ty_contains_rref(self.tcx, rvalue_ty)
         {
             with_no_trimmed_paths!({
-                eprintln!(
-                    "found embedding assignment of type {} to {}: {:?} = {:?} [{:?}]",
-                    place_ty, rvalue_ty, place, rvalue, location
-                );
+                println!("EMBED {} -> {}", rvalue_ty, place_ty);
             });
         }
     }
