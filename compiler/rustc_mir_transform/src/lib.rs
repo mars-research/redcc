@@ -284,7 +284,7 @@ fn mir_const(tcx: TyCtxt<'_>, def: LocalDefId) -> &Steal<Body<'_>> {
             &Lint(function_item_references::FunctionItemReferences),
             // What we need to do constant evaluation.
             &simplify::SimplifyCfg::Initial,
-            &redcc::RRefEmbedTransform,
+            &redcc::RRefEmbedCorrectionTransform,
             &rustc_peek::SanityCheck, // Just a lint
         ],
         None,

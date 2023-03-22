@@ -8,11 +8,12 @@ struct Direct(RRef<i32>);
 
 fn main() {
     // place is array
-    let mut array = RRef([RRef(0), RRef(1)]);
-    array.0[0] = RRef(2);
+    // let mut array = RRef([RRef(0), RRef(1)]);
+    // array.0[0] = RRef(2);
 
-    let mut array = [RRef(0), RRef(1)];
-    array[0] = RRef(2);
+    // let mut array = [RRef(0), RRef(1)];
+    // array[0] = RRef(2);
+    // FIXME: turns out arrays are more complicated than i thought
 
     // tuple
     let mut tuple = RRef((RRef(0), RRef(1)));

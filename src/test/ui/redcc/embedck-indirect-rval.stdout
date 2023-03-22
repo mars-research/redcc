@@ -1,1 +1,1 @@
-EMBED Direct -> RRef<Indirect>
+EMBED RRef<i32> in Direct -> Direct

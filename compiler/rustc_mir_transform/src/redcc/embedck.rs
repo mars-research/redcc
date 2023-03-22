@@ -1,7 +1,11 @@
-use rustc_data_structures::fx::FxHashSet;
-use rustc_middle::mir::{LocalDecls, Place, PlaceElem, PlaceRef};
-use rustc_middle::ty::{self, AdtDef, Ty, TyCtxt, TypeAndMut};
+// use rustc_data_structures::stable_set::FxHashSet;
+use rustc_data_structures::stable_map::FxHashMap;
+use rustc_index::vec::Idx;
+use rustc_middle::mir::{Field, LocalDecls, Place, PlaceElem, PlaceRef};
+use rustc_middle::ty::{self, AdtDef, List, Ty, TyCtxt, TypeAndMut};
 use rustc_span::symbol::sym;
+
+use super::ptree::PTreeNode;
 
 pub fn place_contains_embedded_rref<'tcx>(
     place: Place<'tcx>,
@@ -44,6 +48,85 @@ fn ty_is_rref<'tcx>(ty: Ty<'tcx>, tcx: TyCtxt<'tcx>) -> bool {
     }
 }
 
+pub fn locate_embedded_rrefs<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<PTreeNode<'tcx>> {
+    locate_embedded_rrefs_impl(tcx, ty, &mut FxHashMap::default())
+}
+
+fn locate_embedded_rrefs_impl<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    t: Ty<'tcx>,
+    visited: &mut FxHashMap<Ty<'tcx>, Option<PTreeNode<'tcx>>>,
+) -> Option<PTreeNode<'tcx>> {
+    match visited.get(&t) {
+        Some(existing_node) => existing_node.clone(),
+        None => {
+            let node = match t.kind() {
+                ty::Adt(adt, _) => {
+                    if tcx.is_diagnostic_item(sym::RRef, adt.did()) {
+                        Some(PTreeNode::RRef)
+                    } else {
+                        locate_rrefs_in_adt_fields(tcx, *adt, visited)
+                    }
+                }
+
+                ty::Array(base_ty, length) => locate_embedded_rrefs_impl(tcx, *base_ty, visited)
+                    .map(|node| PTreeNode::Array(Box::new(node), *length)),
+
+                ty::Ref(_, base_ty, _) | ty::RawPtr(TypeAndMut { ty: base_ty, .. }) => {
+                    locate_embedded_rrefs_impl(tcx, *base_ty, visited)
+                        .map(|node| PTreeNode::Deref(Box::new(node)))
+                }
+
+                ty::Tuple(types) => locate_rrefs_in_tuple_fields(tcx, types, visited),
+
+                ty::Slice(..) => todo!(),
+                _ => None,
+            };
+
+            visited.insert(t, node.clone());
+            node
+        }
+    }
+}
+
+fn locate_rrefs_in_adt_fields<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    adt: AdtDef<'tcx>,
+    visited: &mut FxHashMap<Ty<'tcx>, Option<PTreeNode<'tcx>>>,
+) -> Option<PTreeNode<'tcx>> {
+    if !adt.is_struct() {
+        None // FIXME: todo
+    } else {
+        locate_rrefs_in_fields(tcx, adt.all_fields().map(|f| tcx.type_of(f.did)), visited)
+    }
+}
+
+fn locate_rrefs_in_tuple_fields<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    field_types: &List<Ty<'tcx>>,
+    visited: &mut FxHashMap<Ty<'tcx>, Option<PTreeNode<'tcx>>>,
+) -> Option<PTreeNode<'tcx>> {
+    locate_rrefs_in_fields(tcx, field_types.iter(), visited)
+}
+
+fn locate_rrefs_in_fields<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    field_types: impl Iterator<Item = Ty<'tcx>>,
+    visited: &mut FxHashMap<Ty<'tcx>, Option<PTreeNode<'tcx>>>,
+) -> Option<PTreeNode<'tcx>> {
+    let field_nodes = field_types
+        .enumerate()
+        .filter_map(|(i, ty)| {
+            locate_embedded_rrefs_impl(tcx, ty, visited).map(|node| (node, Field::new(i), ty))
+        })
+        .collect::<Vec<_>>();
+
+    if field_nodes.is_empty() { None } else { Some(PTreeNode::Fields(field_nodes)) }
+}
+
+// NOTE: this is old, keeping it around as a reference
+
+/*
 pub fn ty_contains_rref<'tcx>(tcx: TyCtxt<'tcx>, t: Ty<'tcx>) -> bool {
     ty_contains_rref_impl(tcx, t, &mut FxHashSet::default())
 }
@@ -59,7 +142,7 @@ fn ty_contains_rref_impl<'tcx>(
         match t.kind() {
             ty::Adt(adt, _) => {
                 tcx.is_diagnostic_item(sym::RRef, adt.did())
-                    || adt_fields_contain_rref(tcx, adt, visited)
+                    || adt_fields_contain_rref(tcx, *adt, visited)
             }
             ty::Array(base_ty, _) => ty_contains_rref_impl(tcx, *base_ty, visited),
             ty::Slice(base_ty) => ty_contains_rref_impl(tcx, *base_ty, visited),
@@ -77,10 +160,11 @@ fn ty_contains_rref_impl<'tcx>(
 
 fn adt_fields_contain_rref<'tcx>(
     tcx: TyCtxt<'tcx>,
-    adt: &'tcx AdtDef<'tcx>,
+    adt: AdtDef<'tcx>,
     visited: &mut FxHashSet<Ty<'tcx>>,
 ) -> bool {
-    adt.variants()
-        .iter()
-        .any(|v| v.fields.iter().any(|f| ty_contains_rref_impl(tcx, tcx.type_of(f.did), visited)))
+    // FIXME(todo): remove struct restriction to handle enums
+    adt.is_struct() && adt.all_fields()
+        .any(|f| ty_contains_rref_impl(tcx, tcx.type_of(f.did), visited))
 }
+*/
