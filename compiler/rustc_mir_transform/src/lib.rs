@@ -236,7 +236,7 @@ fn mir_const<'tcx>(
             &Lint(function_item_references::FunctionItemReferences),
             // What we need to do constant evaluation.
             &simplify::SimplifyCfg::new("initial"),
-            &redcc::RRefEmbedTransform,
+            &redcc::RRefEmbedCorrectionTransform,
             &rustc_peek::SanityCheck, // Just a lint
             &marker::PhaseChange(MirPhase::Const),
         ],

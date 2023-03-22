@@ -1,3 +1,2 @@
-EMBED RRef<i32> -> RRef<[RRef<i32>; 2]>
-EMBED RRef<i32> -> RRef<(RRef<i32>, RRef<i32>)>
-EMBED RRef<i32> -> &mut RRef<RRef<i32>>
+EMBED RRef<i32> in RRef<i32> -> RRef<i32>
+EMBED RRef<i32> in RRef<i32> -> RRef<i32>

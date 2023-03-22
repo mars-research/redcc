@@ -1,5 +1,4 @@
-EMBED [RRef<i32>; 2] -> RRef<[RRef<i32>; 2]>
-EMBED (RRef<i32>, RRef<i32>) -> RRef<(RRef<i32>, RRef<i32>)>
-EMBED &RRef<i32> -> RRef<Ref>
-EMBED MaybeRRef -> RRef<MaybeRRef>
-EMBED *const RRef<i32> -> RRef<*const RRef<i32>>
+EMBED RRef<i32> in (RRef<i32>, RRef<i32>) -> (RRef<i32>, RRef<i32>)
+EMBED RRef<i32> in (RRef<i32>, RRef<i32>) -> (RRef<i32>, RRef<i32>)
+EMBED RRef<i32> in &RRef<i32> -> &RRef<i32>
+EMBED RRef<i32> in *const RRef<i32> -> *const RRef<i32>
