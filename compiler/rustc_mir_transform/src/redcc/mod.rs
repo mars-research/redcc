@@ -2,7 +2,8 @@ mod embedck;
 mod ptree;
 
 use crate::MirPass;
-use rustc_middle::mir::{visit::MutVisitor, Body, LocalDecls, Location, Place, Rvalue};
+use rustc_index::IndexVec;
+use rustc_middle::mir::{visit::MutVisitor, Body, Local, LocalDecl, Location, Place, Rvalue};
 use rustc_middle::ty::{print::with_no_trimmed_paths, TyCtxt};
 
 pub struct RRefEmbedCorrectionTransform;
@@ -32,7 +33,7 @@ impl<'tcx> MirPass<'tcx> for RRefEmbedCorrectionTransform {
 
 struct RRefEmbedCorrectionTransformVisitor<'tcx> {
     tcx: TyCtxt<'tcx>,
-    local_decls: LocalDecls<'tcx>,
+    local_decls: IndexVec<Local, LocalDecl<'tcx>>,
 }
 
 impl<'tcx> MutVisitor<'tcx> for RRefEmbedCorrectionTransformVisitor<'tcx> {

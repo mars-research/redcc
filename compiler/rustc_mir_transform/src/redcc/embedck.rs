@@ -1,7 +1,8 @@
-// use rustc_data_structures::stable_set::FxHashSet;
-use rustc_data_structures::stable_map::FxHashMap;
-use rustc_index::vec::Idx;
-use rustc_middle::mir::{Field, LocalDecls, Place, PlaceElem, PlaceRef};
+// use rustc_data_structures::fx::FxHashSet;
+use rustc_abi::FieldIdx;
+use rustc_data_structures::fx::FxHashMap;
+use rustc_index::Idx;
+use rustc_middle::mir::{LocalDecls, Place, PlaceElem, PlaceRef};
 use rustc_middle::ty::{self, AdtDef, List, Ty, TyCtxt, TypeAndMut};
 use rustc_span::symbol::sym;
 
@@ -97,7 +98,11 @@ fn locate_rrefs_in_adt_fields<'tcx>(
     if !adt.is_struct() {
         None // FIXME: todo
     } else {
-        locate_rrefs_in_fields(tcx, adt.all_fields().map(|f| tcx.type_of(f.did)), visited)
+        locate_rrefs_in_fields(
+            tcx,
+            adt.all_fields().map(|f| tcx.type_of(f.did).skip_binder()),
+            visited,
+        )
     }
 }
 
@@ -117,7 +122,7 @@ fn locate_rrefs_in_fields<'tcx>(
     let field_nodes = field_types
         .enumerate()
         .filter_map(|(i, ty)| {
-            locate_embedded_rrefs_impl(tcx, ty, visited).map(|node| (node, Field::new(i), ty))
+            locate_embedded_rrefs_impl(tcx, ty, visited).map(|node| (node, FieldIdx::new(i), ty))
         })
         .collect::<Vec<_>>();
 

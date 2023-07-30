@@ -1,5 +1,6 @@
+use rustc_abi::FieldIdx;
 use rustc_middle::{
-    mir::{Field, Place, ProjectionElem},
+    mir::{Place, ProjectionElem},
     ty::{Const, Ty, TyCtxt},
 };
 
@@ -8,7 +9,7 @@ pub enum PTreeNode<'tcx> {
     Array(Box<PTreeNode<'tcx>>, Const<'tcx>),
     // Slice(Box<PTreeNode>), // PROBLEM: slices don't know how long they are, so need to emit a loop here
     Deref(Box<PTreeNode<'tcx>>),
-    Fields(Vec<(PTreeNode<'tcx>, Field, Ty<'tcx>)>),
+    Fields(Vec<(PTreeNode<'tcx>, FieldIdx, Ty<'tcx>)>),
     RRef, // FIXME(todo): handle case where RRef base type also has RRefs inside it (need to add a node for it)
           // FIXME(todo): probably need to add something for enums here
 }
