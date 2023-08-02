@@ -15,7 +15,7 @@ pub enum PTreeNode<'tcx> {
 }
 
 impl<'tcx> PTreeNode<'tcx> {
-    pub fn traverse(&self, place: Place<'tcx>, tcx: TyCtxt<'tcx>, f: impl Fn(Place<'tcx>) + Copy) {
+    pub fn traverse(&self, place: Place<'tcx>, tcx: TyCtxt<'tcx>, f: &mut impl FnMut(Place<'tcx>)) {
         match self {
             PTreeNode::Array(_base, _length) => {
                 // for i in 0..length

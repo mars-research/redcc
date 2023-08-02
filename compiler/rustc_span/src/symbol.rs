@@ -1194,6 +1194,7 @@ symbols! {
         reason,
         receiver,
         recursion_limit,
+        redcc_print_embed,
         reexport_test_harness_main,
         ref_unwind_safe_trait,
         reference,

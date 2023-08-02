@@ -327,6 +327,9 @@ language_item_table! {
 
     String,                  sym::String,              string,                     Target::Struct,         GenericRequirement::None;
     CStr,                    sym::CStr,                c_str,                      Target::Struct,         GenericRequirement::None;
+
+    // Language items for redcc
+    RedCcPrintEmbed,         sym::redcc_print_embed,   redcc_print_embed,          Target::Fn,             GenericRequirement::None;
 }
 
 pub enum GenericRequirement {

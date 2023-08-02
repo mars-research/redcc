@@ -1,6 +1,8 @@
-// build-pass
+// run-pass
+// check-run-results
 
 #![feature(rustc_attrs)]
+#![feature(lang_items)]
 
 #[cfg_attr(not(test), rustc_diagnostic_item = "RRef")]
 struct RRef<T>(T);
@@ -19,6 +21,12 @@ fn main() {
 
     let mut r = TwoRRefs(RRef(1), RRef(2));
     r.1 = RRef(3);
+}
+
+// FIXME: Check type in `compiler/rustc_middle/src/ty/context.rs`
+#[lang = "redcc_print_embed"]
+fn print_embed() {
+    eprintln!("embed");
 }
 
 // more test cases:
